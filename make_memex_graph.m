@@ -169,8 +169,12 @@ DO_COLORS = 0;
 %gv2_file = '/nfs/hn22/tmalisie/ddip/memex.2.gv';
 %ps_file = '/nfs/hn22/tmalisie/ddip/memex.ps';
 %png_file = '/nfs/hn22/tmalisie/ddip/memex.png';
+plain_file = other.plain_file;
+png_file = other.png_file;
 svg_file = other.svg_file;
 gv_file = other.gv_file;
+nodes_file = other.nodes_file;
+gv2_file = other.gv2_file;
 
 if isfield(other,'pdf_file')
   pdf_file = other.pdf_file;
@@ -220,8 +224,10 @@ if nargout == 0
   %unix(sprintf('ps2pdf %s %s',ps_file,pdf_file));
 else
   fprintf(1,'creating png file and loading\n');
-  unix(sprintf('dot -Ksfdp -Tpng %s > %s', ...
-               gv2_file, png_file));
+  [aaa,bbb,ccc] = fileparts(gv2_file);
+  
+  unix(sprintf('cd %s && dot -Ksfdp -Tjpg %s > %s', ...
+               aaa,gv2_file, png_file));
   I = imread(png_file);
 end
 
