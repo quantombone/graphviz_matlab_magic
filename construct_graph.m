@@ -1,45 +1,23 @@
-function I=construct_graph(mat,video)
-K = 100;
-mat = mat(1:K,1:K);
-video = video(1:K);
-
-N = size(mat,1);
+function construct_graph(M, video)
+% Construct a graph visualization using Graphviz using the sfdp
+% algorithm
+% Input:
+%    M the symmetric binary matrix used to visualize
+%    [video] optional sequence of file names which are used as images
+N = size(M,1);
 
 for i = 1:N
-  other.node_names{i} = sprintf('%d',i);
+  params.node_names{i} = sprintf('%d',i);
+  params.icon_string{i} = sprintf('image="%s"',baser(video{i}));
 end
 
-other.icon_string = @(i)sprintf('image="%s"',baser(video{i}));
+M = M - diag(diag(M));
 
-A = mat & mat';
+params.tmpdir = '/tmp/';
 
-%A = (mat + mat')/2;
-A = A - diag(diag(A));
-
-
-
-% newA = A*0;
-% for i = 1:size(A,1)
-%   [aa,bb] = sort(A(i,:),'descend');
-%   newA(i,bb(1:5)) = A(i,bb(1:5));
-% end
-% A = newA & newA';
-
-
-other.svg_file = '/tmp/okay.pdf';
-other.gv_file = '/Users/tomasz/av/demos/frames2/g.gv';
-other.png_file = '/tmp/okay.jpg';
-other.pdf_file = '/tmp/okay.pdf';
-other.plain_file = '/tmp/okay.plain';
-other.nodes_file = '/tmp/okay.nodes';
-other.gv2_file = '/tmp/okay.gv2';
-I=make_memex_graph(A,other);
-
-
-
-
+make_memex_graph(M, params);
 
 function res = baser(x)
-[a,b,c] = fileparts(x);
+[~,b,c] = fileparts(x);
 res = [b c];
 

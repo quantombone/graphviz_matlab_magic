@@ -1,153 +1,88 @@
-function [I]=make_memex_graph(A, other)
-%% Create a graph visualization
-%% Tomasz Malisiewicz (tomasz@cmu.edu)
-%% NOTE: A should be symmetric and have 1 largest component
+function [I] = make_memex_graph(A, params)
+% Create a graph visualization of a matrix
+% Input: 
+%   A: a symmetric binary adjacency matrix
+%   params: an optional set of parameters
+% Output:
+%   I: the graph image
+%
+% NOTE: A should be symmetric and have 1 component (not enforced)
+%
+% Tomasz Malisiewicz (tomasz@cmu.edu) 
+%% if this is turned on, then we do two step coloring
+DO_COLORS = 0;
 
-if ~exist('other','var') || numel(other)==0
-  other.is_silly = 1;
+if ~exist('params','var') || numel(params)==0
+  params.is_silly = 1;
 end
 
-if ~isfield(other,'special_node')
-  other.special_node = -1;
+if ~isfield(params,'special_node')
+  params.special_node = -1;
 end
 
-if ~isfield(other,'shapestring')
+if ~isfield(params,'shapestring')
   for i = 1:size(A,1)
-    other.shapestring{i} = 'shape=circle';
+    params.shapestring{i} = 'shape=circle';
   end
 end
 
-if isfield(other,'evec_coloring')
-  
-  if 0
-  A = A - diag(diag(A));
-  degs = sum(A,1);
-  L = normalized_laplacian(A);
+bname = 'graph';
+params.svg_file = [params.tmpdir bname '.pdf'];
+params.gv_file = [params.tmpdir bname '.gv'];
+params.png_file = [params.tmpdir bname '.jpg'];
+params.pdf_file = [params.tmpdir bname '.pdf'];
+params.plain_file = [params.tmpdir bname '.plain'];
+params.nodes_file = [params.tmpdir bname '.nodes'];
+%params.gv2_file = [params.tmpdir bname '.gv2'];
 
-  [V,D] = eig(full(L));
-  D = D.*(D>0);
-  [aa,bb] = sort(diag(D));
-  V = V(:,bb);
-  D = D(bb,bb);
-  eres = diag(D);
-  eres = eres(other.Kevec);
-  volG = sum(degs);
-  distsmat = sqrt(volG)*diag(degs.^-.5)*V;  
 
-  dists = sqrt(volG)*diag(degs.^-.5)*V(:,other.Kevec);  
- 
-  end
-  %dists = other.V(other.Kevec,:);
-  %[aa,bb] = ct_embedding(A, size(A,1));
-  %dists2 = other.V(other.Kevec,:);
-%keyboard
 
-  
-  NC = 200;
-  colorsheet = jet(NC);
-  colorsheet = colorsheet(end:-1:1,:);
-  
-  if abs(range(dists)) < .000001
-    dists = dists*0+mean(dists);
-  end
-  
-  
-  dists = dists - min(dists);
-  dists = dists / (max(dists)+eps);
-  dists = round(dists*(NC-1)+1);
-  
-  %now dists are between 0 and 1
-  other.colors = rgb2hsv(colorsheet(dists,:));
-end
-
-if ~isfield(other,'colors')
+if ~isfield(params,'colors')
   %% generate white node colors
-  other.colors = rgb2hsv(repmat([1 1 1],size(A,1),1));
+  params.colors = rgb2hsv(repmat([1 1 1],size(A,1),1));
 end
 
-if ~isfield(other, 'node_names');
+if ~isfield(params, 'node_names');
   for i = 1:size(A,1)
-    other.node_names{i} = '';%num2str(i);
+    params.node_names{i} = '';%num2str(i);
   end
 end
 
-if ~isfield(other,'edge_names')
-  % other.edge_names = sparse_cell(size(A,1),size(A,2));
+if ~isfield(params,'edge_names')
+  % params.edge_names = sparse_cell(size(A,1),size(A,2));
   % [u,v] = find(A);
   % for i = 1:length(u)
-  %   other.edge_names{u(i),v(i)} = '';%sprintf('label="W=%.3f"',double(A(u(i),v(i))));
+  %   params.edge_names{u(i),v(i)} = '';%sprintf('label="W=%.3f"',double(A(u(i),v(i))));
   % end
 end
 
-if ~isfield(other,'edge_colors')
+if ~isfield(params,'edge_colors')
   
   % [u,v] = find(A);
-  % other.edge_colors = sparse_cell(size(A,1),size(A,2));
+  % params.edge_colors = sparse_cell(size(A,1),size(A,2));
   % for i = 1:length(u)
-  %   other.edge_colors{u(i),v(i)} = rgb2hsv([0 0 0]);
+  %   params.edge_colors{u(i),v(i)} = rgb2hsv([0 0 0]);
   % end
     
-  %other.edge_colors = colorsheet(dists,:);
-  %other.edge_colors(:, 1) = 1;
+  %params.edge_colors = colorsheet(dists,:);
+  %params.edge_colors(:, 1) = 1;
 end
 
-if isfield(other,'ct_edge_coloring')
-  fprintf(1,'got here\n');
-  V = other.V;
-  %V = ct_embedding(A, other.Kevec);
-  [u,v] = find(A);
-  dists = sum((V(1:other.Kevec,u) - V(1:other.Kevec,v)).^2,1);
-
-
-
-
-  if 0
-    figure(2)
-    CT = getCTmatrix(A);
-    CT = CT.*A;
-    CT2 = distSqr_fast(V,V);
-    CT2 = CT2.*A;
-    imagesc(CT-CT2), colorbar
-    title('difference in CTs')
-    figure(1)
-  end
-
-  NC = 200;
-  colorsheet = jet(NC);
-  colorsheet = colorsheet(end:-1:1,:);
-  
-  if abs(range(dists)) < .000001
-    dists = dists*0+mean(dists);
-  end
-    
-  dists = dists - min(dists);
-  dists = dists / (max(dists)+eps);
-  dists = round(dists*(NC-1)+1);
-
-  cur_colors = colorsheet(dists,:);
-  
-  %other.edge_colors = sparse_cell(size(A,1),size(A,2));
-  %for i = 1:length(u)
-  %  other.edge_colors{u(i),v(i)} = cur_colors(i,:);
-  %end
-end
-
-if ~isfield(other,'icon_string')
-  other.icon_string = @(i)'';
+if ~isfield(params,'icon_string')
+  params.icon_string = @(i)'';
 end
   
 for i = 1:size(A,1)
-  other.colstring{i} = sprintf('fillcolor="%.3f %.3f %.3f"',...
-                               other.colors(i,1), ...
-                               other.colors(i,2),...
-                               other.colors(i,3)); 
+  params.colstring{i} = sprintf('fillcolor="%.3f %.3f %.3f"',...
+                               params.colors(i,1), ...
+                               params.colors(i,2),...
+                               params.colors(i,3)); 
   
-  other.node_names{i} = sprintf('label="%s"',other.node_names{i});
+  params.node_names{i} = sprintf('label="%s"',params.node_names{i});
 end
 
 
-%% if this is turned on, then we do two step coloring
-DO_COLORS = 0;
+
 %A = A>0;
 %A = (A+A')>0;
 
@@ -169,18 +104,10 @@ DO_COLORS = 0;
 %gv2_file = '/nfs/hn22/tmalisie/ddip/memex.2.gv';
 %ps_file = '/nfs/hn22/tmalisie/ddip/memex.ps';
 %png_file = '/nfs/hn22/tmalisie/ddip/memex.png';
-plain_file = other.plain_file;
-png_file = other.png_file;
-svg_file = other.svg_file;
-gv_file = other.gv_file;
-nodes_file = other.nodes_file;
-gv2_file = other.gv2_file;
-
-if isfield(other,'pdf_file')
-  pdf_file = other.pdf_file;
-else
-  pdf_file = '/nfs/hn22/tmalisie/ddip/memex.pdf';
+if 0
+  params.tmpdir = '/tmp/';
 end
+
 
 if ~exist('special_node','var')
   special_node = -1;
@@ -193,7 +120,7 @@ end
 %end
 
 fprintf(1,'Dumping graph\n');
-show_graph(A, gv_file, [], other);
+show_graph(A, [], params);
 
 if DO_COLORS == 1
   fprintf(1,'creating plain file\n');
@@ -209,34 +136,35 @@ if DO_COLORS == 1
   [aa,bb] = sort(ids);
   positions = positions(bb,:);
 
+  
   fprintf(1,'Dumping graph with colors\n');
-  show_graph(A, gv2_file, positions,other);
+  show_graph(A, positions, params);
 else
-  gv2_file = gv_file;
+  %params.gv2_file = params.gv_file;
 end
 
 if nargout == 0
-  fprintf(1,'creating svg file %s\n', svg_file);
-  [basedir,tmp,tmp] = fileparts(svg_file);
+  fprintf(1,'creating pdf file %s\n', params.pdf_file);
+  [basedir,tmp,tmp] = fileparts(params.pdf_file);
   unix(sprintf('cd %s && dot -Ksfdp -Tpdf %s > %s', ...
-               basedir,gv2_file, svg_file));
+               basedir,params.gv_file, params.pdf_file));
   
   %unix(sprintf('ps2pdf %s %s',ps_file,pdf_file));
 else
   fprintf(1,'creating png file and loading\n');
-  [aaa,bbb,ccc] = fileparts(gv2_file);
+  [aaa,bbb,ccc] = fileparts(params.gv2_file);
   
-  unix(sprintf('cd %s && dot -Ksfdp -Tjpg %s > %s', ...
-               aaa,gv2_file, png_file));
+  unix(sprintf('cd %s && dot -Ksfdp -Tpng %s > %s', ...
+               aaa,gv2_file, params.png_file));
   I = imread(png_file);
 end
 
-function show_graph(A, gv_file, positions, other)
+function show_graph(A, positions, params)
+gv_file = params.gv_file;
 [u,v] = find(A>0);
 goods = (v>=u);
 u = u(goods);
 v = v(goods);
-
 
 fid = fopen(gv_file,'w');
 
@@ -253,15 +181,15 @@ fprintf(fid,'overlap="scale"\n');
 
 for i = 1:size(A,1)
  
-  %if i == other.special_node
+  %if i == params.special_node
   %  shapestring = 'penwidth=50';%'style=filled fillcolor="red"';
   %end
   
   fprintf(fid,'%d [%s %s %s %s];\n',i,...
-          other.shapestring{i},...
-          other.colstring{i},...
-          other.node_names{i},...
-          other.icon_string(i));
+          params.shapestring{i},...
+          params.colstring{i},...
+          params.node_names{i},...
+          params.icon_string{i});
 
   %end
   %fprintf(fid,'%d;\n',i);
@@ -288,7 +216,7 @@ if numel(positions) > 0
 end
 
 % for i = 1:length(u)
-%   other.edge_colors{u(i),v(i)} = rgb2hsv(other.edge_colors{u(i), ...
+%   params.edge_colors{u(i),v(i)} = rgb2hsv(params.edge_colors{u(i), ...
 %                     v(i)});
 % end
 
@@ -298,8 +226,8 @@ for i = 1:length(u)
   end
   
   en = '';
-  if isfield(other,'edge_names')
-    en = other.edge_names{u(i),v(i)};
+  if isfield(params,'edge_names')
+    en = params.edge_names{u(i),v(i)};
   end
 
   if exist('edge_colors','var')
@@ -308,8 +236,8 @@ for i = 1:length(u)
     ec = [1 1 1];
   end
 
-  if isfield(other,'edge_colors')
-    ec = other.edge_colors{u(i),v(i)};
+  if isfield(params,'edge_colors')
+    ec = params.edge_colors{u(i),v(i)};
   end
   fprintf(fid,'%d -- %d [weight=%.5f color="%.3f %.3f %.3f" %s];\n',...
           u(i), v(i), A(u(i),v(i)),...

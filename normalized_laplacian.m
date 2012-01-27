@@ -7,3 +7,10 @@ L = speye(size(A)) - Tih*A*Tih;
 %% enforce machine precision un-symmetry
 %% helps eigs make sure we don't get negative eigenvalues
 L = (L + L')/2;
+
+function W = spdiag(D)
+% from Timothee Cour
+
+D=D(:);
+n=length(D);
+W = spdiags(D,0,n,n);
