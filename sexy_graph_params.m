@@ -15,6 +15,3 @@ params.sfdp_coloring = 0;
 params.file_prefix = 'graph';
 params.tmpdir = '/tmp/';
 
-params.gv_file = [params.tmpdir params.file_prefix '.gv'];
-params.png_file = [params.tmpdir params.file_prefix '.png'];
-params.pdf_file = [params.tmpdir params.file_prefix '.pdf'];

@@ -13,9 +13,11 @@ if iscell(sequence)
   % following size: [NDIM x NIMAGES]
   % Then compute distances squared between each element, producing a
   % [NIMAGES x NIMAGES] matrix
+  tic
   d = distSqr_fast(ecat(emap(@(x)reshape(esvm_hog(imresize_max(toI(x),200),20),[], ...
                             1),sequence),2));
-  
+  toc
+  fprintf(1,'Features took %.3f seconds to process\n');
 elseif isnumeric(sequence)
   d = sequence;
 end

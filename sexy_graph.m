@@ -34,6 +34,11 @@ A = A - diag(diag(A));
 if ~exist('params','var')
   params = sexy_graph_params(A);
 end
+
+params.gv_file  = [params.tmpdir params.file_prefix '.gv'];
+params.png_file = [params.tmpdir params.file_prefix '.png'];
+params.pdf_file = [params.tmpdir params.file_prefix '.pdf'];
+
   
 for i = 1:size(A,1)
   params.colstring{i} = sprintf('fillcolor="%.3f %.3f %.3f"',...
