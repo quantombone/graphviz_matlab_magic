@@ -29,7 +29,7 @@ A = d<thresh;
 A = A&A';
 
 params = sexy_graph_params(A);
-params.sfdp_coloring = 1;
+%params.sfdp_coloring = 1;
 %params = eigenvector_node_coloring(A, params);
 sexy_graph(A,params);
 
