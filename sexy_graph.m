@@ -1,10 +1,23 @@
-function I = make_memex_graph(A, params)
+function I = sexy_graph(A, params)
 % Create a graph visualization of a matrix using graphviz via sfdp mode
 % Input: 
 %   A: a symmetric binary adjacency matrix
-%   params: an optional set of parameters
+%   params: an optional set of parameters, calls
+%     [params]=sexy_graph_params(A), if params is not present
+%     params.sfdp_coloring=1 will enable sfdp edge coloring based on
+%     sfdp emedding distance
 % Output:
 %   I: the graph image
+%
+% Examples:
+% To write a PDF, call function without output parameters
+%   >> sexy_graph(A);
+% To write an image, just call with output
+%   >> I = sexy_graph(A);
+% To write a PDF with sfdp coloring
+%   >> params = sexy_graph_params(A);
+%   >> params.sfdp_coloring = 1;
+%   >> sexy_graph(A,params);
 %
 % NOTE: A should be symmetric and have 1 component (not enforced)
 %
@@ -88,8 +101,9 @@ if numel(positions) > 0
     dists(i) = norm(positions(u(i),:)-positions(v(i),:));
   end
   
-  NC = 20;
+  NC = 200;
   colorsheet = jet(NC);
+  colorsheet = colorsheet(end:-1:1,:);
   
   dists = dists - min(dists);
   dists = dists / (max(dists)+eps);
@@ -97,6 +111,7 @@ if numel(positions) > 0
   
   %now dists are between 0 and 1
   edge_colors = colorsheet(dists,:);
+  edge_colors = rgb2hsv(edge_colors);
 end
 
 for i = 1:length(u)
@@ -146,3 +161,7 @@ positions = r(:,2:3);
 ids = r(:,1);
 [aa,bb] = sort(ids);
 positions = positions(bb,:);
+
+% Clean up files
+delete(plain_file);
+delete(nodes_file);

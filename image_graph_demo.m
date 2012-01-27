@@ -18,10 +18,12 @@ A = d<thresh;
 A = A&A';
 
 % Show the graph
-make_memex_graph(A);
+%sexy_graph(A);
 
-%params = sexy_graph_params(A);
-%make_memex_graph(A,params);
+params = sexy_graph_params(A);
+%params.sfdp_coloring = 1;
+params = evec_coloring(A, params);
+sexy_graph(A,params);
 
 %if on a mac
 %unix(['open ' params.pdf_file]);
