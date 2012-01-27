@@ -18,6 +18,11 @@ function I = sexy_graph(A, params)
 %   >> params = sexy_graph_params(A);
 %   >> params.sfdp_coloring = 1;
 %   >> sexy_graph(A,params);
+% To write a PDF with eigenvector coloring
+%   >> params = sexy_graph_params(A);
+%   >> params = eigenvector_node_coloring(A, params, 2);
+%   >> sexy_graph(A,params);
+
 %
 % NOTE: A should be symmetric and have 1 component (not enforced)
 %

@@ -1,14 +1,25 @@
 function image_graph_demo(sequence)
-% A demo which shows an image graph
+% A demo which creates an image graph using graphviz
+%
+% Inputs: 
+%   sequence: (either a cell array of images or a distance
+%     matrix).  If the input is a cell array of images, then the
+%     exemplarsvm library is required for some utility functions.
+% Outputs:
+%    The file will be written to /tmp/graph.pdf
 
-% Compute HOG features per image, resulting feature matrix is the
-% following size: [NDIM x NIMAGES]
-x = ecat(emap(@(x)reshape(esvm_hog(imresize_max(toI(x),200),20),[], ...
-                          1),sequence),2);
-
-% Compute distances squared between each element, producing a
-% [NIMAGES x NIMAGES] matrix
-d = distSqr_fast(x);
+if iscell(sequence)
+  % Compute HOG features per image, resulting feature matrix is the
+  % following size: [NDIM x NIMAGES]
+  x = ecat(emap(@(x)reshape(esvm_hog(imresize_max(toI(x),200),20),[], ...
+                            1),sequence),2);
+  
+  % Compute distances squared between each element, producing a
+  % [NIMAGES x NIMAGES] matrix
+  d = distSqr_fast(x);
+elseif isnumeric(sequence)
+  d = sequence;
+end
 
 % Create symmetric binary adjacency matrix by taking top 10% of
 % shortest edges and enforcing symmetry
@@ -17,13 +28,11 @@ thresh = sd(max(1,round(.1*length(sd))));
 A = d<thresh;
 A = A&A';
 
-% Show the graph
-%sexy_graph(A);
-
 params = sexy_graph_params(A);
 %params.sfdp_coloring = 1;
-params = evec_coloring(A, params);
+params = eigenvector_node_coloring(A, params);
 sexy_graph(A,params);
 
-%if on a mac
-%unix(['open ' params.pdf_file]);
+%uncomment below, if on a mac, and you want the graph to
+%automatically display
+unix(['open ' params.pdf_file]);
