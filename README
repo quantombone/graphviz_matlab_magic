@@ -1,1 +1,4 @@
 In this directory, are the graphviz/sfdp graph drawing interfaces to matlab
+--Tomasz Malisiewicz
+
+see sexy_graph.m for an explanation of how to use.
