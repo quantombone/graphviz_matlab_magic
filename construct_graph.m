@@ -8,13 +8,13 @@ N = size(M,1);
 
 for i = 1:N
   params.node_names{i} = sprintf('%d',i);
-  params.icon_string{i} = sprintf('image="%s"',baser(video{i}));
+  if exist('video','var')
+    params.icon_string{i} = sprintf('image="%s"',baser(video{i}));
+  end
 end
 
 M = M - diag(diag(M));
-
 params.tmpdir = '/tmp/';
-
 make_memex_graph(M, params);
 
 function res = baser(x)
