@@ -13,10 +13,9 @@ if iscell(sequence)
   % following size: [NDIM x NIMAGES]
   % Then compute distances squared between each element, producing a
   % [NIMAGES x NIMAGES] matrix
-  x = distSqr_fast(ecat(emap(@(x)reshape(esvm_hog(imresize_max(toI(x),200),20),[], ...
+  d = distSqr_fast(ecat(emap(@(x)reshape(esvm_hog(imresize_max(toI(x),200),20),[], ...
                             1),sequence),2));
   
-
 elseif isnumeric(sequence)
   d = sequence;
 end
@@ -29,7 +28,7 @@ A = d<thresh;
 A = A&A';
 
 params = sexy_graph_params(A);
-%params.sfdp_coloring = 1;
+params.sfdp_coloring = 1;
 %params = eigenvector_node_coloring(A, params);
 sexy_graph(A,params);
 
