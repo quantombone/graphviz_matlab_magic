@@ -9,6 +9,9 @@ function I = sexy_graph(A, params)
 % Output:
 %   I: the graph image
 %
+%   If no output arguments are specified, then a pdf file is
+%   written to disk.
+%
 % Examples:
 % To write a PDF, call function without output parameters
 %   >> sexy_graph(A);
@@ -22,7 +25,9 @@ function I = sexy_graph(A, params)
 %   >> params = sexy_graph_params(A);
 %   >> params = eigenvector_node_coloring(A, params, 2);
 %   >> sexy_graph(A,params);
-
+%
+% Graphviz needs to be installed! Try running the command "dot" on
+% the command line to see if it is installed or not.
 %
 % NOTE: A should be symmetric and have 1 component (not enforced)
 %
@@ -49,21 +54,24 @@ for i = 1:size(A,1)
   params.node_names{i} = sprintf('label="%s"',params.node_names{i});
 end
 
-write_dot_file(A, [], params);
+[u,v] = write_dot_file(A, params);
 
 if params.sfdp_coloring == 1
   positions = load_positions_from_sfdp(params.gv_file);
+  params.edge_colors = edge_colors_from_positions(u,v,positions);
   fprintf(1,'Re-dumping graph with colors\n');
-  write_dot_file(A, positions, params);
+  write_dot_file(A, params);
 end
 
+
 if nargout == 0
+  %If no outputs are specified, we write a pdf file.
   fprintf(1,'creating pdf file %s\n', params.pdf_file);
   [basedir,tmp,tmp] = fileparts(params.pdf_file);
   [~,~]=unix(sprintf('cd %s && dot -Ksfdp -Tpdf %s > %s', ...
                basedir,params.gv_file, params.pdf_file));
 else
-  fprintf(1,'creating png file and loading\n');
+  fprintf(1,'Creating png file and loading\n');
   [aaa,bbb,ccc] = fileparts(params.gv_file);
   
   [~,~]=unix(sprintf('cd %s && dot -Ksfdp -Tpng %s > %s', ...
@@ -72,12 +80,15 @@ else
   delete(params.png_file);
 end
 
+% delete graphviz file
 delete(params.gv_file);
 
-function write_dot_file(A, positions, params)
-% Writes the dot file which graphviz will use as input
+function [u,v] = write_dot_file(A, params)
+% Writes the dot file which graphviz will use as input, and return
+% the indices of the edges
 
 gv_file = params.gv_file;
+
 [u,v] = find(A>0);
 goods = (v>=u);
 u = u(goods);
@@ -105,25 +116,6 @@ for i = 1:size(A,1)
           params.icon_string{i});
 end
 
-if numel(positions) > 0
-  dists = zeros(length(u),1);
-  for i = 1:length(u) 
-    dists(i) = norm(positions(u(i),:)-positions(v(i),:));
-  end
-  
-  NC = 200;
-  colorsheet = jet(NC);
-  colorsheet = colorsheet(end:-1:1,:);
-  
-  dists = dists - min(dists);
-  dists = dists / (max(dists)+eps);
-  dists = round(dists*(NC-1)+1);
-  
-  %now dists are between 0 and 1
-  edge_colors = colorsheet(dists,:);
-  edge_colors = rgb2hsv(edge_colors);
-end
-
 for i = 1:length(u)
   if u(i)>v(i)
     continue
@@ -134,29 +126,26 @@ for i = 1:length(u)
     en = params.edge_names{u(i),v(i)};
   end
 
-  if exist('edge_colors','var')
-    ec = edge_colors(i,:);
+  if isfield(params,'edge_colors')
+    ec = params.edge_colors(i,:);
   else
     ec = [1 1 1];
   end
 
-  if isfield(params,'edge_colors')
-    ec = params.edge_colors{u(i),v(i)};
-  end
   fprintf(fid,'%d -- %d [weight=%.5f color="%.3f %.3f %.3f" %s];\n',...
-          u(i), v(i), A(u(i),v(i)),...
+          u(i), v(i), full(A(u(i),v(i))),...
           ec(1),ec(2),ec(3),...
           en);
-
+  
 end
 
 fprintf(fid,'}\n');
 fclose(fid);
 
-
-
 function positions = load_positions_from_sfdp(gv_file)
-
+% Use some simple shell tricks to grep out the positions of nodes
+% after we run graphviz on the input file and return a simple ascii
+% output file.
 plain_file = [gv_file '.plain'];
 nodes_file = [gv_file '.nodes'];
 
@@ -175,3 +164,26 @@ positions = positions(bb,:);
 % Clean up files
 delete(plain_file);
 delete(nodes_file);
+
+function edge_colors = edge_colors_from_positions(u,v,positions)
+%Given the [u,v] indices of connected nodes as well as their
+%positions, compute the 2D distance between connected nodes.  Then
+%create edge colors which map the shortest edge to red and the
+%longest edge to blue using Matlab's jet color scheme.
+
+% Compute the euclided distances between connected nodes
+dists = sqrt(sum( (positions(u,:)-positions(v,:)).^2,2));
+
+%quantize colors into 200 different discrete colors
+NC = 200;
+colorsheet = jet(NC);
+colorsheet = colorsheet(end:-1:1,:);
+
+% map dists to [0,1] range
+dists = dists - min(dists);
+dists = dists / (max(dists)+eps);
+dists = round(dists*(NC-1)+1);
+
+%graphviz needs colors in hsv format
+edge_colors = colorsheet(dists,:);
+edge_colors = rgb2hsv(edge_colors);
